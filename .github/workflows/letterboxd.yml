@@ -1,0 +1,23 @@
+name: Latest Letterboxd Activity
+on:
+  schedule:
+    # Runs every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch: # Allows you to trigger it manually
+
+permissions:
+  contents: write
+
+jobs:
+  update-readme-with-movies:
+    name: Update README with Letterboxd RSS
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Pull Letterboxd feed
+        uses: gautamkrishnar/blog-post-workflow@v1
+        with:
+          comment_tag_name: "LETTERBOXD-LIST"
+          feed_list: "https://letterboxd.com/moosejagger/rss/"
+          max_post_count: 3
