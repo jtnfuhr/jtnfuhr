@@ -14,13 +14,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
+      - name: Install curl_cffi
+        run: pip install curl_cffi
+
       - name: Update README with styled Letterboxd posters
         run: python3 .github/scripts/update_letterboxd.py
 
       - name: Commit and push changes
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.email "41898282+github-actions[bot]@://github.com"
           git add README.md
           git diff --staged --quiet || git commit -m "Update Letterboxd movies"
           git push
