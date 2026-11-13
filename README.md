@@ -8,6 +8,9 @@ Now playing:
 </a>
 
 <!-- LETTERBOXD-LIST:START -->
+- [Wild Horse Nine, 2026 - ★★★★½](https://letterboxd.com/moosejagger/film/wild-horse-nine/)
+- [Minions &amp; Monsters, 2026 - ★★★½](https://letterboxd.com/moosejagger/film/minions-monsters-2026/)
+- [Funny Games, 2007 - ★★★](https://letterboxd.com/moosejagger/film/funny-games-2007/)
 <!-- LETTERBOXD-LIST:END -->
 
 
