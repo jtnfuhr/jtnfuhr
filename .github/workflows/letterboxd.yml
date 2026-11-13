@@ -14,9 +14,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Install curl_cffi
-        run: pip install curl_cffi
-
       - name: Update README with styled Letterboxd posters
         run: python3 .github/scripts/update_letterboxd.py
 
