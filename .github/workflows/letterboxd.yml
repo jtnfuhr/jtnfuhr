@@ -14,14 +14,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
       - name: Update README with styled Letterboxd posters
         run: |
-          python3 -c '
+          python3 - << 'EOF'
           import re
           import urllib.request
           import xml.etree.ElementTree as ET
@@ -33,26 +28,26 @@ jobs:
           root = ET.fromstring(xml_data)
 
           ns = {"letterboxd": "https://letterboxd.com"}
-          items = root.findall("./channel/item")[:3]
+          items = root.findall("./channel/item")
 
           cells = []
           for item in items:
               title_el = item.find("letterboxd:filmTitle", ns)
-              year_el = item.find("letterboxd:filmYear", ns)
               if title_el is None:
                   continue
 
               title = title_el.text
+              year_el = item.find("letterboxd:filmYear", ns)
               year = year_el.text if year_el is not None else ""
               link = item.find("link").text
               desc = item.find("description").text or ""
 
-              # Extract higher-res poster URL if available
-              img_match = re.search(r"<img[^>]+src=\"([^\"]+)\"", desc)
+              # Extract and upgrade poster resolution
+              img_match = re.search(r'<img[^>]+src="([^"]+)"', desc)
               poster = img_match.group(1) if img_match else ""
               poster = re.sub(r"-0-\d+-0-\d+-crop", "-0-300-0-450-crop", poster)
 
-              # Format rating with green SVG stars
+              # Format rating stars
               rating_el = item.find("letterboxd:memberRating", ns)
               stars_html = ""
               if rating_el is not None and rating_el.text:
@@ -62,38 +57,42 @@ jobs:
                   stars_str = ("★" * full) + ("½" if half else "")
                   stars_html = f"<br><code>{stars_str}</code>"
 
-              # Check if rewatch
+              # Rewatch badge
               rewatch_el = item.find("letterboxd:rewatch", ns)
               rewatch_badge = " 🔁" if (rewatch_el is not None and rewatch_el.text == "Yes") else ""
 
-              # Format watched date
+              # Watched date
               date_el = item.find("letterboxd:watchedDate", ns)
               date_str = ""
               if date_el is not None and date_el.text:
                   dt = datetime.strptime(date_el.text, "%Y-%m-%d")
-                  date_str = f"<br><sub>Watched {dt.strftime(\"%b %d, %Y\")}{rewatch_badge}</sub>"
+                  formatted_date = dt.strftime("%b %d, %Y")
+                  date_str = f"<br><sub>Watched {formatted_date}{rewatch_badge}</sub>"
 
               cell = (
-                  f"    <td align=\"center\" valign=\"top\" width=\"210\">\n"
-                  f"      <a href=\"{link}\">\n"
-                  f"        <img src=\"{poster}\" width=\"150\" alt=\"{title}\" />\n"
-                  f"      </a>\n"
-                  f"      <br>\n"
-                  f"      <a href=\"{link}\"><b>{title}</b></a> <sub>({year})</sub>"
-                  f"{stars_html}"
-                  f"{date_str}\n"
-                  f"    </td>"
+                  f'    <td align="center" valign="top" width="210">\n'
+                  f'      <a href="{link}">\n'
+                  f'        <img src="{poster}" width="150" alt="{title}" />\n'
+                  f'      </a>\n'
+                  f'      <br>\n'
+                  f'      <a href="{link}"><b>{title}</b></a> <sub>({year})</sub>'
+                  f'{stars_html}'
+                  f'{date_str}\n'
+                  f'    </td>'
               )
               cells.append(cell)
 
+              if len(cells) == 3:
+                  break
+
           html_block = (
-              "<div align=\"center\">\n"
-              "  <table>\n"
-              "    <tr>\n" +
-              "\n".join(cells) + "\n"
-              "    </tr>\n"
-              "  </table>\n"
-              "</div>"
+              '<div align="center">\n'
+              '  <table>\n'
+              '    <tr>\n' +
+              '\n'.join(cells) + '\n'
+              '    </tr>\n'
+              '  </table>\n'
+              '</div>'
           )
 
           with open("README.md", "r", encoding="utf-8") as f:
@@ -105,12 +104,12 @@ jobs:
 
           with open("README.md", "w", encoding="utf-8") as f:
               f.write(updated)
-          '
+          EOF
 
       - name: Commit and push changes
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@://github.com"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add README.md
           git diff --staged --quiet || git commit -m "Update Letterboxd movies"
           git push
