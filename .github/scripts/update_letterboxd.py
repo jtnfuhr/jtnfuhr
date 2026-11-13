@@ -1,13 +1,44 @@
 import re
+import urllib.parse
+import urllib.request
 import xml.etree.ElementTree as ET
 from datetime import datetime
-from curl_cffi import requests
 
-url = "https://letterboxd.com"
-response = requests.get(url, impersonate="chrome", timeout=20)
-response.raise_for_status()
+rss_url = "https://letterboxd.com"
+encoded_url = urllib.parse.quote(rss_url, safe="")
 
-root = ET.fromstring(response.content)
+# Proxy endpoints to bypass Azure/GitHub Actions IP blocks
+proxy_urls = [
+    f"https://allorigins.win{encoded_url}",
+    f"https://codetabs.com{encoded_url}",
+    f"https://freeboard.io{rss_url}",
+]
+
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    "Accept": "application/xml, text/xml, */*",
+}
+
+xml_data = None
+last_error = None
+
+for proxy in proxy_urls:
+    try:
+        req = urllib.request.Request(proxy, headers=headers)
+        with urllib.request.urlopen(req, timeout=20) as response:
+            data = response.read()
+            if b"<rss" in data or b"<channel>" in data:
+                xml_data = data
+                print(f"Successfully fetched RSS via: {proxy.split('?')[0]}")
+                break
+    except Exception as e:
+        last_error = e
+        print(f"Proxy failed ({proxy.split('?')[0]}): {e}")
+
+if xml_data is None:
+    raise RuntimeError(f"All RSS proxies failed. Last error: {last_error}")
+
+root = ET.fromstring(xml_data)
 ns = {"letterboxd": "https://letterboxd.com"}
 items = root.findall("./channel/item")
 
