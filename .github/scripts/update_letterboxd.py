@@ -1,19 +1,13 @@
 import re
-import urllib.request
 import xml.etree.ElementTree as ET
 from datetime import datetime
+from curl_cffi import requests
 
 url = "https://letterboxd.com"
-headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-    "Accept": "application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.8",
-}
+response = requests.get(url, impersonate="chrome", timeout=20)
+response.raise_for_status()
 
-req = urllib.request.Request(url, headers=headers)
-with urllib.request.urlopen(req, timeout=15) as response:
-    xml_data = response.read()
-
-root = ET.fromstring(xml_data)
+root = ET.fromstring(response.content)
 ns = {"letterboxd": "https://letterboxd.com"}
 items = root.findall("./channel/item")
 
